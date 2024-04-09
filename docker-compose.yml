@@ -1,6 +1,6 @@
 name: telegrambot_transcriber
 services:
-  web:
+  telegrambot_transcriber:
     image: ghcr.io/adrianvillanueva997/telegrambot_transcriber:v1.0.0
     networks:
       - proxy
@@ -21,3 +21,6 @@ services:
     env_file: stack.env
     ports:
       - 8000
+networks:
+  proxy:
+    external: true
