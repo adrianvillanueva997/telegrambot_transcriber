@@ -1,7 +1,7 @@
 name: telegrambot_transcriber
 services:
   telegrambot_transcriber:
-    image: ghcr.io/adrianvillanueva997/telegrambot_transcriber:v1.0.1
+    image: ghcr.io/adrianvillanueva997/telegrambot_transcriber:v1.0.1@sha256:d04d421e24c49d91f25a62a5c3aaf0dd4857cb7fa12e2cd983b4a23436c9891f
     networks:
       - proxy
     container_name: telegrambot_transcriber
