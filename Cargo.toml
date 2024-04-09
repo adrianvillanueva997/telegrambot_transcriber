@@ -15,12 +15,12 @@ name = "transcriber_telegrambot"
 
 [dependencies]
 color-eyre = "0.6.3"
-log = "0.4.20"
+log = "0.4.21"
 pretty_env_logger = "0.5.0"
 teloxide = { version = "0.12", features = ["macros", "webhooks-axum"] }
-tokio = { version = "1.32", features = [
+tokio = { version = "1.37", features = [
     "rt-multi-thread",
     "macros",
     "process",
 ] }
-url = "2.4.1"
+url = "2.5.0"
