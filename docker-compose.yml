@@ -1,13 +1,23 @@
-version: "3"
+name: telegrambot_transcriber
 services:
-  bot:
-    image: ghcr.io/adrianvillanueva997/telegrambot_transcriber:latest@sha256:6f3811f1dc5dd4cb2f15410a4ae17364e51ac567b8adb8e3a46811918c6cff80
+  web:
+    image: ghcr.io/adrianvillanueva997/telegrambot_transcriber:v1.0.0
+    networks:
+      - proxy
     container_name: telegrambot_transcriber
     restart: unless-stopped
-    env_file:
-      - stack.env
-    volumes:
-      - "/etc/timezone:/etc/timezone:ro"
-      - "/etc/localtime:/etc/localtime:ro"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.middlewares.transcriber-redirect-websecure.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.transcriber-redirect-websecure.redirectscheme.permanent=true"
+      - "traefik.http.routers.transcriber-web.middlewares=transcriber-redirect-websecure"
+      - traefik.http.routers.transcriber-web.rule=Host(`transcriber.thexiao77.com`)
+      - traefik.http.routers.transcriber-web.entrypoints=http
+      - traefik.http.routers.transcriber-websecure.rule=Host(`transcriber.thexiao77.com`)
+      - traefik.http.routers.transcriber-websecure.tls.certresolver=le
+      - traefik.http.routers.transcriber-websecure.tls=true
+      - traefik.http.routers.transcriber-websecure.entrypoints=https
+      - "traefik.docker.network=proxy"
+    env_file: stack.env
     ports:
       - 8000
