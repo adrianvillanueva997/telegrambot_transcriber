@@ -32,4 +32,4 @@ USER root
 RUN chown -R appuser:appuser /app
 USER appuser
 
-ENTRYPOINT [ "./deficiente_telegram_bot" ]
+ENTRYPOINT [ "./transcriber_telegrambot" ]
