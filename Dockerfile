@@ -1,34 +1,35 @@
-# Multistage docker image building
-# build-env -> prod
-
-FROM python:3.11.4-slim-buster AS build-env
-
-# Install build dependencies
-RUN apt-get update \
-  && apt-get install -y build-essential python-pkg-resources ffmpeg flac \
-  && rm -rf /var/lib/apt/lists/*
-
-# Install Poetry
-RUN pip install --upgrade --no-cache-dir pip &&  pip install --no-cache-dir poetry
-
-# Copy only the dependency files
-COPY pyproject.toml poetry.lock /app/
-
-# Install dependencies in a virtual environment
-WORKDIR /app
-RUN poetry config virtualenvs.create false \
-  && poetry install --no-root --no-dev
-
-# Second stage
-FROM python:3.11.4-slim-buster AS prod
-
-# Copy installed dependencies from previous stage
-COPY --from=build-env /usr/local /usr/local
-
-# Copy project files
-WORKDIR /app
+FROM rust:1.72.0-slim-bullseye AS build
+WORKDIR /build
+RUN apt-get update && \
+  apt-get install -y apt-utils pkg-config libssl-dev --no-install-recommends  && \
+  apt-get clean && \
+  rm -rf /var/lib/apt/lists/* && \
+  rm -rf /tmp/* /var/tmp/*
 COPY . .
+RUN cargo build --release
 
-# Expose port and set command
-EXPOSE 2112
-CMD ["make", "prod"]
+FROM ubuntu:22.04 AS prod
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+RUN echo "deb http://security.ubuntu.com/ubuntu focal-security main" | tee /etc/apt/sources.list.d/focal-security.list
+RUN apt-get update && \
+  apt-get install -y python3 python3-pip apt-utils ca-certificates pkg-config libssl-dev libssl1.1 ffmpeg --no-install-recommends && \
+  apt-get clean && \
+  rm -rf /var/lib/apt/lists/* && \
+  rm -rf /tmp/* /var/tmp/*
+WORKDIR /app
+RUN pip install --no-cache-dir --upgrade pip && \
+  pip install --no-cache-dir poetry
+COPY pyproject.toml poetry.lock ./
+RUN poetry config virtualenvs.create false && \
+  poetry install --no-dev --no-interaction --no-ansi
+COPY --from=build /build/target/release/transcriber_telegrambot .
+RUN adduser --disabled-password appuser
+USER appuser
+ENV RUST_LOG=debug
+EXPOSE 80
+
+USER root
+RUN chown -R appuser:appuser /app
+USER appuser
+
+ENTRYPOINT [ "./transcriber_telegrambot" ]

@@ -6,20 +6,9 @@ authors = ["adrianvillanueva997 <adrianvillanueva997@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = ">= 3.10 <4"
-asyncio = "^3.4.3"
-python-telegram-bot = "^20.4"
-pydub = "^0.25.1"
 ffmpeg-python = "^0.2.0"
 vosk = "^0.3.45"
-prometheus-client = "^0.17.1"
-loguru = "^0.7.0"
 
-
-[tool.poetry.group.dev.dependencies]
-mypy = "^1.5"
-pytest = "^7.4.0"
-pylama = "^8.4.1"
-ruff = "^0.0.287"
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
