@@ -1,7 +1,7 @@
 version: "3"
 services:
   bot:
-    image: ghcr.io/adrianvillanueva997/telegrambot_transcriber:latest
+    image: ghcr.io/adrianvillanueva997/telegrambot_transcriber:latest@sha256:6f3811f1dc5dd4cb2f15410a4ae17364e51ac567b8adb8e3a46811918c6cff80
     container_name: telegrambot_transcriber
     restart: unless-stopped
     env_file:

@@ -1,4 +1,4 @@
-FROM rust:1.72.0-slim-bullseye AS build
+FROM rust:1.72.0-slim-bullseye@sha256:19f863cf39685cf157b5646b1d61ed8436270f02228bdd3a9e56d6c8445f694c AS build
 WORKDIR /build
 RUN apt-get update && \
   apt-get install -y apt-utils pkg-config libssl-dev --no-install-recommends  && \
@@ -8,7 +8,7 @@ RUN apt-get update && \
 COPY . .
 RUN cargo build --release
 
-FROM ubuntu:22.04 AS prod
+FROM ubuntu:22.04@sha256:77906da86b60585ce12215807090eb327e7386c8fafb5402369e421f44eff17e AS prod
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN echo "deb http://security.ubuntu.com/ubuntu focal-security main" | tee /etc/apt/sources.list.d/focal-security.list
 RUN apt-get update && \
