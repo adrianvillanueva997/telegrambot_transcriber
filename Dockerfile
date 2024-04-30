@@ -1,4 +1,4 @@
-FROM rust:1.77.2-slim-bullseye@sha256:e6415812ccaa674a660edac8b17190c7d867f9dc5019024a8c72caaec3c20b62 AS build
+FROM rust:1.77.2-slim-bullseye@sha256:7479fa9dfc57f84dd90db9b0149b0a5e1076d902d6c31ea73ee5464d52d7c168 AS build
 WORKDIR /build
 RUN apt-get update && \
   apt-get install -y apt-utils pkg-config libssl-dev --no-install-recommends  && \
