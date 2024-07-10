@@ -1,7 +1,7 @@
 # Multistage docker image building
 # build-env -> prod
 
-FROM python:3.11.4-slim-buster AS build-env
+FROM python:3.12.4-slim-buster AS build-env
 
 # Install build dependencies
 RUN apt-get update \
@@ -20,7 +20,7 @@ RUN poetry config virtualenvs.create false \
   && poetry install --no-root --no-dev
 
 # Second stage
-FROM python:3.11.4-slim-buster AS prod
+FROM python:3.12.4-slim-buster AS prod
 
 # Copy installed dependencies from previous stage
 COPY --from=build-env /usr/local /usr/local
