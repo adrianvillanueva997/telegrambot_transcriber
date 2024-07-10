@@ -13,6 +13,7 @@ ffmpeg-python = "^0.2.0"
 vosk = "^0.3.45"
 pip = "^24.1.2"
 pytest = "^8.2.2"
+anyio = "^4.4.0"
 
 [tool.poetry.group.dev.dependencies]
 pylama = "^8.4.1"
