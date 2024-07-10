@@ -22,7 +22,9 @@ RUN poetry config virtualenvs.create false \
 
 # Second stage
 FROM base AS prod
-
+RUN apt-get update \
+  && apt-get install -y ffmpeg flac make \
+  && rm -rf /var/lib/apt/lists/*
 # Copy installed dependencies from previous stage
 COPY --from=build-env /usr/local /usr/local
 
