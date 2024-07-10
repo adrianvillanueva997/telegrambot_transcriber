@@ -1,31 +1,34 @@
-FROM rust:1.78.0-slim-bullseye@sha256:33baf245a3be288ec45d6534ebf94de088b834ef9202fd8e1176a3c1a0d9b730 AS build
-WORKDIR /build
-RUN apt-get update && \
-  apt-get install -y apt-utils pkg-config libssl-dev --no-install-recommends  && \
-  apt-get clean && \
-  rm -rf /var/lib/apt/lists/* && \
-  rm -rf /tmp/* /var/tmp/*
-COPY . .
-RUN cargo build --release
+# Multistage docker image building
+# build-env -> prod
 
-FROM ubuntu:24.04@sha256:3f85b7caad41a95462cf5b787d8a04604c8262cdcdf9a472b8c52ef83375fe15 AS prod
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-RUN echo "deb http://security.ubuntu.com/ubuntu focal-security main" | tee /etc/apt/sources.list.d/focal-security.list
-RUN apt-get update && \
-  apt-get install -y python3 python3-pip apt-utils ca-certificates pkg-config libssl-dev libssl1.1 ffmpeg pipx --no-install-recommends && \
-  apt-get clean && \
-  rm -rf /var/lib/apt/lists/* && \
-  rm -rf /tmp/* /var/tmp/*
+FROM python:3.11.4-slim-buster AS build-env
+
+# Install build dependencies
+RUN apt-get update \
+  && apt-get install -y build-essential python-pkg-resources ffmpeg flac \
+  && rm -rf /var/lib/apt/lists/*
+
+# Install Poetry
+RUN pip install --upgrade --no-cache-dir pip &&  pip install --no-cache-dir poetry
+
+# Copy only the dependency files
+COPY pyproject.toml poetry.lock /app/
+
+# Install dependencies in a virtual environment
 WORKDIR /app
-RUN pipx install vosk
-COPY --from=build /build/target/release/transcriber_telegrambot .
-RUN adduser --disabled-password appuser
-USER appuser
-ENV RUST_LOG=debug
-EXPOSE 80
+RUN poetry config virtualenvs.create false \
+  && poetry install --no-root --no-dev
 
-USER root
-RUN chown -R appuser:appuser /app
-USER appuser
+# Second stage
+FROM python:3.11.4-slim-buster AS prod
 
-ENTRYPOINT [ "./transcriber_telegrambot" ]
+# Copy installed dependencies from previous stage
+COPY --from=build-env /usr/local /usr/local
+
+# Copy project files
+WORKDIR /app
+COPY . .
+
+# Expose port and set command
+EXPOSE 2112
+CMD ["make", "prod"]
