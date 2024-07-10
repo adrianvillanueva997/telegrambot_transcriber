@@ -1,5 +1,7 @@
 import asyncio
 import os
+import uuid
+from pathlib import Path
 from shutil import ExecError
 
 import anyio
@@ -29,35 +31,41 @@ async def transcribe(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
         and hasattr(update.message.voice, "file_id")
     ):
         voice_file: File = await context.bot.get_file(update.message.voice.file_id)
+        session_id: uuid.UUID = uuid.uuid4()
+        audio_name = f"{session_id!s}.ogg"
+        output_name = f"{session_id!s}.txt"
         logger.info(update.message.voice)
-        await voice_file.download_to_drive("audio.ogg")
+        await voice_file.download_to_drive(audio_name)
         try:
+            # Create the audio file
             process = await asyncio.create_subprocess_exec(
                 "vosk-transcriber",
                 "-l",
                 "es",
                 "-i",
-                "audio.ogg",
+                audio_name,
                 "-o",
-                "output.txt",
+                output_name,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
-            stdout, stderr = await process.communicate()
-            output = stdout.decode("utf-8")
+            await process.wait()
+            async with await anyio.open_file(output_name) as file:
+                content = await file.read()
+                try:
+                    await update.message.reply_text(
+                        text=content,
+                        reply_to_message_id=update.message.id,
+                    )
+                except Exception as e:
+                    logger.error(e)
 
-            if output == 0:
-                async with await anyio.open_file("output.txt") as file:
-                    content = await file.read()
-                    try:
-                        await update.message.reply_text(
-                            text=content,
-                            reply_to_message_id=update.message.id,
-                        )
-                    except Exception as e:
-                        logger.error(e)
         except ExecError as e:
             logger.error(e)
+        finally:
+            # Clean up
+            Path(audio_name).unlink(missing_ok=True)
+            Path(output_name).unlink(missing_ok=True)
 
 
 def main() -> None:
