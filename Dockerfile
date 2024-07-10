@@ -14,14 +14,10 @@ RUN pip install --upgrade --no-cache-dir pip && pip install --no-cache-dir poetr
 WORKDIR /app
 
 # Copy the dependency files
-COPY pyproject.toml poetry.lock /app/
+COPY . .
 
 # Install dependencies using Poetry
-RUN poetry config virtualenvs.create false \
-  && poetry install --no-root --only main
-
-# Copy the rest of the project files
-COPY . /app
+RUN poetry install
 
 # Expose the application port
 EXPOSE 2112
