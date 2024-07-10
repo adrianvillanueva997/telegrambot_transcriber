@@ -1,6 +1,6 @@
 services:
   bot:
-    image: ghcr.io/adrianvillanueva997/telegrambot_transcriber:v2.0.1
+    image: ghcr.io/adrianvillanueva997/telegrambot_transcriber:v2.0.2
     container_name: telegrambot_transcriber
     restart: unless-stopped
     volumes:
