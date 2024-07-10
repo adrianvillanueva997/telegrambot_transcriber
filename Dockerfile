@@ -6,7 +6,7 @@ FROM base AS build-env
 
 # Install build dependencies
 RUN apt-get update \
-  && apt-get install -y build-essential python-pkg-resources ffmpeg flac \
+  && apt-get install -y build-essential ffmpeg flac \
   && rm -rf /var/lib/apt/lists/*
 
 # Install Poetry
@@ -18,7 +18,7 @@ COPY pyproject.toml poetry.lock /app/
 # Install dependencies in a virtual environment
 WORKDIR /app
 RUN poetry config virtualenvs.create false \
-  && poetry install --no-root --no-dev
+  && poetry install --no-root --only main
 
 # Second stage
 FROM base AS prod
