@@ -1,37 +1,30 @@
-# Multistage docker image building
-# build-env -> prod
+# Simplified Dockerfile without multistage building
 
-FROM python:3.12.4-slim-bookworm AS base
-FROM base AS build-env
+FROM python:3.12.4-slim-bookworm
 
-# Install build dependencies
+# Install system dependencies
 RUN apt-get update \
-  && apt-get install -y build-essential ffmpeg flac \
+  && apt-get install -y build-essential ffmpeg flac make \
   && rm -rf /var/lib/apt/lists/*
 
-# Install Poetry
-RUN pip install --upgrade --no-cache-dir pip &&  pip install --no-cache-dir poetry
+# Upgrade pip and install Poetry
+RUN pip install --upgrade --no-cache-dir pip && pip install --no-cache-dir poetry
 
-# Copy only the dependency files
+# Set the working directory
+WORKDIR /app
+
+# Copy the dependency files
 COPY pyproject.toml poetry.lock /app/
 
-# Install dependencies in a virtual environment
-WORKDIR /app
+# Install dependencies using Poetry
 RUN poetry config virtualenvs.create false \
   && poetry install --no-root --only main
 
-# Second stage
-FROM base AS prod
-RUN apt-get update \
-  && apt-get install -y ffmpeg flac make \
-  && rm -rf /var/lib/apt/lists/*
-# Copy installed dependencies from previous stage
-COPY --from=build-env /usr/local /usr/local
+# Copy the rest of the project files
+COPY . /app
 
-# Copy project files
-WORKDIR /app
-COPY . .
-
-# Expose port and set command
+# Expose the application port
 EXPOSE 2112
+
+# Set the command to run the application
 CMD ["make", "prod"]
