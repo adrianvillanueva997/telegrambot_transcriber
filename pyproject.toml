@@ -19,7 +19,7 @@ prometheus-client = "^0.20.0"
 
 [tool.poetry.group.dev.dependencies]
 pylama = "^8.4.1"
-ruff = "^0.5.1"
+ruff = "^0.6.0"
 mypy = "^1.10.1"
 [build-system]
 requires = ["poetry-core>=1.0.0"]
