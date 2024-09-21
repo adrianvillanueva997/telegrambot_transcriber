@@ -15,7 +15,7 @@ pip = "^24.1.2"
 pytest = "^8.2.2"
 anyio = "^4.4.0"
 loguru = "^0.7.2"
-prometheus-client = "^0.20.0"
+prometheus-client = "^0.21.0"
 
 [tool.poetry.group.dev.dependencies]
 pylama = "^8.4.1"
