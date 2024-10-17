@@ -1,6 +1,6 @@
 # Simplified Dockerfile without multistage building
 
-FROM python:3.12.6-slim-bookworm
+FROM python:3.13.0-slim-bookworm
 
 # Install system dependencies
 RUN apt-get update \
