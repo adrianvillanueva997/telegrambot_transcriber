@@ -29,5 +29,12 @@
 	"prConcurrentLimit": 10,
 	"prHourlyLimit": 4,
 	"commitMessagePrefix": "chore(deps):",
-	"commitBody": "Signed-off-by: Renovate Bot <bot@renovateapp.com>"
+	"commitBody": "Signed-off-by: Renovate Bot <bot@renovateapp.com>",
+	"automergeType": "pr",
+	"automergeStrategy": "squash",
+	"requiredStatusChecks": ["test", "build"],
+	"platformAutomerge": true,
+	"ignoreTests": false,
+	"updateNotScheduled": false,
+	"stabilityDays": 3
 }
