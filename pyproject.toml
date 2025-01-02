@@ -1,26 +1,27 @@
-[tool.poetry]
-name = "transcriber_telegrambot"
+[project]
+name = "transcriber-telegrambot"
 version = "0.1.0"
-description = ""
-authors = ["adrianvillanueva997 <adrianvillanueva997@gmail.com>"]
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "anyio>=4.7.0",
+    "asyncio>=3.4.3",
+    "ffmpeg-python>=0.2.0",
+    "loguru>=0.7.3",
+    "prometheus-client>=0.21.1",
+    "pydub>=0.25.1",
+    "python-telegram-bot>=21.9",
+    "vosk>=0.3.45",
+]
 
-[tool.poetry.dependencies]
-python = ">= 3.12"
-asyncio = "^3.4.3"
-python-telegram-bot = "^20.4"
-pydub = "^0.25.1"
-ffmpeg-python = "^0.2.0"
-vosk = "^0.3.45"
-pip = "^24.1.2"
-pytest = "^8.2.2"
-anyio = "^4.4.0"
-loguru = "^0.7.2"
-prometheus-client = "^0.21.0"
-
-[tool.poetry.group.dev.dependencies]
-pylama = "^8.4.1"
-ruff = "^0.6.0"
-mypy = "^1.10.1"
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = ["mypy>=1.14.1", "ruff>=0.8.4"]
+
+
+[project.scripts]
+transcriber-telegrambot = "transcriber_telegrambot:main"

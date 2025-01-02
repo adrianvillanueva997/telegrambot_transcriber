@@ -1,15 +1,33 @@
 {
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:recommended",
-    "group:allNonMajor",
-    "helpers:pinGitHubActionDigests"
-  ],
-  "kubernetes": {
-    "fileMatch": ["^infra/.*\\.yaml$"]
-  },
-  "dependencyDashboard": true,
-  "assignees": ["adrianvillanueva997"],
-  "recreateWhen": "always",
-  "labels": ["dependencies", "renovate"]
+	"$schema": "https://docs.renovatebot.com/renovate-schema.json",
+	"extends": [
+		"config:recommended",
+		"group:allNonMajor",
+		"helpers:pinGitHubActionDigests",
+		":semanticCommits",
+		":automergePatch"
+	],
+	"kubernetes": {
+		"fileMatch": ["^infra/.*\\.yaml$"]
+	},
+	"dependencyDashboard": true,
+	"assignees": ["adrianvillanueva997"],
+	"recreateWhen": "always",
+	"labels": ["dependencies", "renovate"],
+	"schedule": ["before 5am on monday"],
+	"vulnerabilityAlerts": {
+		"labels": ["security"],
+		"assignees": ["adrianvillanueva997"]
+	},
+	"packageRules": [
+		{
+			"matchDepTypes": ["devDependencies"],
+			"groupName": "dev dependencies",
+			"automerge": true
+		}
+	],
+	"prConcurrentLimit": 10,
+	"prHourlyLimit": 4,
+	"commitMessagePrefix": "chore(deps):",
+	"commitBody": "Signed-off-by: Renovate Bot <bot@renovateapp.com>"
 }
