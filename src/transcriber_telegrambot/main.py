@@ -70,6 +70,8 @@ async def transcribe(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
 
 def main() -> None:
     """Start the bot."""
+    start_http_server(2112)
+    logger.info("Bot running!")
     # Create the Application and pass it your bot's token.
     application = Application.builder().token(os.environ["BOT_TOKEN"]).build()
 
@@ -84,6 +86,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    start_http_server(2112)
-    logger.info("Bot running!")
     main()
