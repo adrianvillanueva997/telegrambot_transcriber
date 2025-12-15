@@ -1,5 +1,5 @@
 # Build stage
-FROM python:3.13.5-slim-bookworm AS builder
+FROM python:3.13.11-slim-bookworm AS builder
 
 WORKDIR /app
 
@@ -16,7 +16,7 @@ COPY . .
 RUN uv build
 
 # Final stage
-FROM python:3.13.5-slim-bookworm
+FROM python:3.13.11-slim-bookworm
 
 WORKDIR /app
 
