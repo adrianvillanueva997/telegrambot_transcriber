@@ -1,13 +1,18 @@
-import asyncio
 import os
+import asyncio
+import json
+import tempfile
 import uuid
+from dataclasses import dataclass, field
 from pathlib import Path
-from shutil import ExecError
+from threading import Lock
+from typing import TYPE_CHECKING, ClassVar
 
 import anyio
 from loguru import logger
 from prometheus_client import start_http_server
-from telegram import File, Update
+from pydub import AudioSegment
+from telegram import Update
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -15,6 +20,58 @@ from telegram.ext import (
     MessageHandler,
     filters,
 )
+from vosk import KaldiRecognizer, Model
+
+if TYPE_CHECKING:
+    from telegram import File
+
+
+@dataclass
+class Audio:
+    session_id: uuid.UUID = field(default_factory=uuid.uuid4)
+    EXTENSION: str = field(default="ogg")
+    _tmpdir: Path = field(default_factory=lambda: Path(tempfile.mkdtemp()))
+
+    _model: ClassVar[Model | None] = None
+    _model_lock: ClassVar[Lock] = Lock()
+
+    @property
+    def name(self) -> str:
+        return str(self._tmpdir / f"{self.session_id}.{self.EXTENSION}")
+
+    @classmethod
+    def _get_model(cls) -> Model:
+        if cls._model is None:
+            with cls._model_lock:
+                if cls._model is None:
+                    cls._model = Model(lang="es")
+        return cls._model
+
+    async def transcribe(self) -> str:
+        def _run():
+            audio = AudioSegment.from_file(self.name, format=self.EXTENSION)
+            audio = audio.set_frame_rate(16000).set_channels(1).set_sample_width(2)
+            raw_data = audio.raw_data
+
+            model = self._get_model()
+            rec = KaldiRecognizer(model, 16000.0)
+            rec.SetWords(True)
+
+            results = []
+            offset = 0
+            chunk_size = 4000
+            while offset < len(raw_data):
+                chunk = raw_data[offset : offset + chunk_size]
+                offset += chunk_size
+                if rec.AcceptWaveform(chunk):
+                    part = json.loads(rec.Result())
+                    results.append(part)
+            final = json.loads(rec.FinalResult())
+            results.append(final)
+
+            return "\n".join(part["text"] for part in results if part.get("text"))
+
+        return await asyncio.to_thread(_run)
 
 
 async def help_command(update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
@@ -24,64 +81,45 @@ async def help_command(update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 async def transcribe(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Transcribres the user message."""
-    if (
-        update.message
-        and update.message.voice
-        and hasattr(update.message.voice, "file_id")
-    ):
-        voice_file: File = await context.bot.get_file(update.message.voice.file_id)
-        session_id: uuid.UUID = uuid.uuid4()
-        audio_name = f"{session_id!s}.ogg"
-        output_name = f"{session_id!s}.txt"
-        logger.info(update.message.voice)
-        await voice_file.download_to_drive(audio_name)
-        try:
-            # Create the audio file
-            process = await asyncio.create_subprocess_exec(
-                "vosk-transcriber",
-                "-l",
-                "es",
-                "-i",
-                audio_name,
-                "-o",
-                output_name,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-            )
-            await process.wait()
-            async with await anyio.open_file(output_name) as file:
-                content = await file.read()
-                try:
-                    await update.message.reply_text(
-                        text=content,
-                        reply_to_message_id=update.message.id,
-                    )
-                except Exception as e:
-                    logger.error(e)
+    """Transcribes a voice message."""
+    if not (update.message and update.message.voice):
+        return
 
-        except ExecError as e:
-            logger.error(e)
-        finally:
-            # Clean up
-            Path(audio_name).unlink(missing_ok=True)
-            Path(output_name).unlink(missing_ok=True)
+    audio = Audio()
+    voice_file: File = await context.bot.get_file(update.message.voice.file_id)
+    await voice_file.download_to_drive(audio.name)
+
+    if not await anyio.Path(audio.name).exists():
+        logger.error(f"Downloaded file not found: {audio.name}")
+        return
+
+    try:
+        text = await audio.transcribe()
+        logger.info(
+            f"Transcribed voice ({update.message.from_user.username}): {text or '[empty]'}"
+        )
+        if not text:
+            return
+        await update.message.reply_text(
+            text=text,
+            reply_to_message_id=update.message.id,
+        )
+    except Exception as e:
+        logger.error(f"Transcription failed: {e}")
+    finally:
+        await anyio.Path(audio.name).unlink(missing_ok=True)
 
 
 def main() -> None:
     """Start the bot."""
     start_http_server(2112)
     logger.info("Bot running!")
-    # Create the Application and pass it your bot's token.
     application = Application.builder().token(os.environ["BOT_TOKEN"]).build()
 
-    # on different commands - answer in Telegram
     application.add_handler(CommandHandler("help", help_command))
 
-    # on non command i.e message - echo the message on Telegram
     application.add_handler(MessageHandler(~filters.COMMAND, transcribe))
 
-    # Run the bot until the user presses Ctrl-C
     application.run_polling()
 
 
