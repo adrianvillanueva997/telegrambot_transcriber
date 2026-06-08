@@ -1,4 +1,4 @@
-# Build stage
+# Builder stage
 FROM python:3.12.13-slim-bookworm AS builder
 
 WORKDIR /app
@@ -10,30 +10,32 @@ RUN apt-get update \
   && pip install --no-cache-dir --upgrade pip \
   && pip install --no-cache-dir uv
 
-COPY . .
+# Install dependencies first (cached unless pyproject.toml changes)
+COPY pyproject.toml .
+RUN uv sync --no-dev
 
-# Build wheel in dist directory
-RUN uv build
+# Copy source and install the package
+COPY . .
+RUN uv sync --no-dev
 
 # Final stage
-FROM python:3.14.2-slim-bookworm
+FROM python:3.12.13-slim-bookworm
 
 WORKDIR /app
 
-# Install runtime dependencies
 RUN apt-get update \
   && apt-get install -y --no-install-recommends \
   ffmpeg \
-  flac \
+  curl \
   && rm -rf /var/lib/apt/lists/* \
   && pip install --no-cache-dir --upgrade pip \
   && pip install --no-cache-dir uv \
   && useradd -m -r app \
   && chown -R app:app /app
 
-# Copy and install wheel from dist
-COPY --from=builder /app/dist/*.whl /tmp/
-RUN uv venv && uv pip install /tmp/*.whl && rm /tmp/*.whl
+COPY --from=builder /app/.venv /app/.venv
+COPY --from=builder /app/src /app/src
+COPY pyproject.toml /app/
 
 USER app
 
@@ -42,9 +44,7 @@ EXPOSE 2112
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:2112/metrics || exit 1
 
-# Activate the virtual environment
 ENV VIRTUAL_ENV=/app/.venv
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
-ENV PYTHONPATH="/app:$PYTHONPATH"
 
-CMD ["/app/.venv/bin/python", "-m", "transcriber_telegrambot"]
+CMD ["python", "-m", "transcriber_telegrambot"]
