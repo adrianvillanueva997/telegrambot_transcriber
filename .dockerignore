@@ -13,4 +13,3 @@ dist
 .ruff_cache
 .vscode
 .idea
-*.md
