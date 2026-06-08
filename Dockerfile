@@ -11,7 +11,7 @@ RUN apt-get update \
   && pip install --no-cache-dir uv
 
 # Install dependencies first (cached unless pyproject.toml changes)
-COPY pyproject.toml .
+COPY pyproject.toml README.md .
 RUN uv sync --no-dev
 
 # Copy source and install the package
@@ -35,7 +35,7 @@ RUN apt-get update \
 
 COPY --from=builder /app/.venv /app/.venv
 COPY --from=builder /app/src /app/src
-COPY pyproject.toml /app/
+COPY pyproject.toml README.md /app/
 
 USER app
 
