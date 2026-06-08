@@ -1,3 +1,15 @@
 .venv
+.git
+.gitignore
+__pycache__
+*.pyc
+*.pyo
+.env
+.env.*
 audio.ogg
 audio.wav
+dist
+*.egg-info
+.ruff_cache
+.vscode
+.idea
