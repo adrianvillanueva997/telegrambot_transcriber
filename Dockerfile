@@ -12,7 +12,7 @@ RUN apt-get update \
 
 # Install dependencies first (cached unless pyproject.toml changes)
 COPY pyproject.toml README.md .
-RUN uv sync --no-dev
+RUN uv sync --no-dev --no-install-project
 
 # Copy source and install the package
 COPY . .
