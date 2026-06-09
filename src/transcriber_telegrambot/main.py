@@ -1,6 +1,7 @@
-import os
 import asyncio
 import json
+import os
+import shutil
 import tempfile
 import uuid
 from dataclasses import dataclass, field
@@ -26,14 +27,22 @@ if TYPE_CHECKING:
     from telegram import File
 
 
+_transcribe_semaphore = asyncio.Semaphore(4)
+
+
 @dataclass
 class Audio:
     session_id: uuid.UUID = field(default_factory=uuid.uuid4)
     EXTENSION: str = field(default="ogg")
+    TIMEOUT: int = field(default=120)
     _tmpdir: Path = field(default_factory=lambda: Path(tempfile.mkdtemp()))
 
     _model: ClassVar[Model | None] = None
     _model_lock: ClassVar[Lock] = Lock()
+
+    def __del__(self) -> None:
+        if self._tmpdir.exists():
+            shutil.rmtree(self._tmpdir, ignore_errors=True)
 
     @property
     def name(self) -> str:
@@ -48,7 +57,7 @@ class Audio:
         return cls._model
 
     async def transcribe(self) -> str:
-        def _run():
+        def _run() -> str:
             audio = AudioSegment.from_file(self.name, format=self.EXTENSION)
             audio = audio.set_frame_rate(16000).set_channels(1).set_sample_width(2)
             raw_data = audio.raw_data
@@ -71,7 +80,11 @@ class Audio:
 
             return "\n".join(part["text"] for part in results if part.get("text"))
 
-        return await asyncio.to_thread(_run)
+        async with _transcribe_semaphore:
+            return await asyncio.wait_for(
+                asyncio.to_thread(_run),
+                timeout=self.TIMEOUT,
+            )
 
 
 async def help_command(update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
@@ -87,7 +100,17 @@ async def transcribe(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
 
     audio = Audio()
     voice_file: File = await context.bot.get_file(update.message.voice.file_id)
-    await voice_file.download_to_drive(audio.name)
+    for attempt in range(3):
+        try:
+            await voice_file.download_to_drive(audio.name)
+            break
+        except Exception as e:
+            logger.warning(f"Download attempt {attempt + 1} failed: {e}")
+            if attempt < 2:
+                await asyncio.sleep(2**attempt)
+    else:
+        logger.error("Download failed after 3 attempts")
+        return
 
     if not await anyio.Path(audio.name).exists():
         logger.error(f"Downloaded file not found: {audio.name}")
@@ -96,7 +119,7 @@ async def transcribe(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     try:
         text = await audio.transcribe()
         logger.info(
-            f"Transcribed voice ({update.message.from_user.username}): {text or '[empty]'}"
+            f"Transcribed voice ({update.message.from_user.username}): {text or '[empty]'}",
         )
         if not text:
             return
