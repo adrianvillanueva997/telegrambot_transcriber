@@ -1,5 +1,5 @@
 # Builder stage
-FROM python:3.12.13-slim-bookworm AS builder
+FROM python:3.14.6-slim-bookworm AS builder
 
 WORKDIR /app
 
@@ -19,7 +19,7 @@ COPY . .
 RUN uv sync --no-dev
 
 # Final stage
-FROM python:3.12.13-slim-bookworm
+FROM python:3.14.6-slim-bookworm
 
 WORKDIR /app
 
