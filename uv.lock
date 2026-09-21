@@ -1,9 +1,9 @@
 version = 1
 revision = 3
-requires-python = "==3.14.6"
+requires-python = "==3.14.7"
 resolution-markers = [
-    "platform_machine != 'arm64' or sys_platform != 'darwin'",
-    "platform_machine == 'arm64' and sys_platform == 'darwin'",
+    "sys_platform == 'linux' or sys_platform == 'win32'",
+    "sys_platform != 'linux' and sys_platform != 'win32'",
 ]
 required-markers = [
     "platform_machine == 'arm64' and sys_platform == 'darwin'",
@@ -416,8 +416,8 @@ dependencies = [
     { name = "prometheus-client" },
     { name = "pydub" },
     { name = "python-telegram-bot" },
-    { name = "vosk", version = "0.3.44", source = { registry = "https://pypi.org/simple" }, marker = "platform_machine == 'arm64' and sys_platform == 'darwin'" },
-    { name = "vosk", version = "0.3.45", source = { registry = "https://pypi.org/simple" }, marker = "platform_machine != 'arm64' or sys_platform != 'darwin'" },
+    { name = "vosk", version = "0.3.44", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'linux' and sys_platform != 'win32'" },
+    { name = "vosk", version = "0.3.45", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
 ]
 
 [package.dev-dependencies]
@@ -486,7 +486,7 @@ name = "vosk"
 version = "0.3.44"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "platform_machine == 'arm64' and sys_platform == 'darwin'",
+    "sys_platform != 'linux' and sys_platform != 'win32'",
 ]
 dependencies = [
     { name = "cffi" },
@@ -504,7 +504,7 @@ name = "vosk"
 version = "0.3.45"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "platform_machine != 'arm64' or sys_platform != 'darwin'",
+    "sys_platform == 'linux' or sys_platform == 'win32'",
 ]
 dependencies = [
     { name = "cffi" },
